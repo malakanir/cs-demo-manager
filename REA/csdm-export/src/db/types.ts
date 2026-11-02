@@ -1,0 +1,213 @@
+import type { ColumnType } from 'kysely';
+
+// cs-demo-manager column shapes, subset needed by the exporter.
+// Extended incrementally as export features are added per task.
+
+export type ByteArray = ColumnType<Buffer, Buffer, Buffer>;
+
+export type DemosTable = {
+  checksum: string;
+  map_name: string;
+  tickrate: number;
+  tick_count: number;
+  game: string;
+  name: string;
+  date: ColumnType<Date, Date, Date>;
+  duration: number;
+};
+
+export type MatchesTable = {
+  checksum: string;
+  demo_path: string;
+  winner_name: string | null;
+  winner_side: number | null;
+  overtime_count: number;
+  max_rounds: number;
+};
+
+export type PlayersTable = {
+  match_checksum: string;
+  steam_id: string;
+  name: string;
+  team_name: string;
+  color: string | null;
+};
+
+export type SteamAccountOverridesTable = {
+  steam_id: string;
+  name: string;
+};
+
+export type TeamsTable = {
+  match_checksum: string;
+  side: number;
+  name: string;
+  letter: string;
+  score: number;
+};
+
+export type RoundsTable = {
+  match_checksum: string;
+  round_number: number;
+  start_tick: number;
+  freeze_time_end_tick: number;
+  end_tick: number;
+  end_officially_tick: number | null;
+  winner_side: number | null;
+  end_reason: string | null;
+  score_ct: number;
+  score_t: number;
+};
+
+export type PlayerPositionsTable = {
+  match_checksum: string;
+  round_number: number;
+  player_steam_id: string;
+  player_name: string;
+  ticks: ByteArray;
+  x: ByteArray;
+  y: ByteArray;
+  z: ByteArray;
+  yaw: ByteArray;
+  flash_duration_remaining: ByteArray;
+  is_ducking: ByteArray;
+  is_airborne: ByteArray;
+  state_ticks: ByteArray;
+  is_alive: ByteArray;
+  side: ByteArray;
+  money: ByteArray;
+  health: ByteArray;
+  armor: ByteArray;
+  has_helmet: ByteArray;
+  has_bomb: ByteArray;
+  has_defuse_kit: ByteArray;
+  is_scoping: ByteArray;
+  is_defusing: ByteArray;
+  is_planting: ByteArray;
+  is_grabbing_hostage: ByteArray;
+  active_weapon_name: string[];
+  equipments: string[];
+  grenades: string[];
+  pistols: string[];
+  smgs: string[];
+  rifles: string[];
+  heavy: string[];
+};
+
+export type GrenadePositionsTable = {
+  match_checksum: string;
+  round_number: number;
+  grenade_id: string;
+  projectile_id: string;
+  grenade_name: string;
+  thrower_steam_id: string;
+  thrower_side: number;
+  ticks: ByteArray;
+  x: ByteArray;
+  y: ByteArray;
+  z: ByteArray;
+};
+
+export type InfernoPositionsTable = {
+  match_checksum: string;
+  round_number: number;
+  unique_id: string;
+  thrower_steam_id: string;
+  ticks: ByteArray;
+  convex_hulls_2d: string[];
+};
+
+export type KillsTable = {
+  match_checksum: string;
+  round_number: number;
+  tick: number;
+  killer_steam_id: string;
+  killer_name: string;
+  killer_side: number | null;
+  victim_steam_id: string;
+  victim_name: string;
+  victim_side: number | null;
+  assister_steam_id: string;
+  assister_name: string;
+  assister_side: number | null;
+  weapon_name: string;
+  headshot: boolean;
+  killer_x: number;
+  killer_y: number;
+  victim_x: number;
+  victim_y: number;
+  through_smoke: boolean;
+  no_scope: boolean;
+  penetrated_objects: number;
+};
+
+export type ShotsTable = {
+  match_checksum: string;
+  round_number: number;
+  tick: number;
+  shooter_steam_id: string;
+  shooter_name: string;
+  shooter_side: number | null;
+  weapon_name: string;
+  x: number;
+  y: number;
+  player_yaw: number;
+};
+
+export type GrenadeEventTable = {
+  match_checksum: string;
+  round_number: number;
+  tick: number;
+  grenade_id: string;
+  projectile_id: string;
+  x: number;
+  y: number;
+  z: number;
+  thrower_steam_id: string;
+  thrower_side: number | null;
+};
+
+export type BombEventTable = {
+  match_checksum: string;
+  round_number: number;
+  tick: number;
+  site: number;
+  x: number;
+  y: number;
+  z: number;
+  planter_steam_id: string | null;
+  defuser_steam_id: string | null;
+};
+
+export type MapsTable = {
+  name: string;
+  game: string;
+  position_x: number;
+  position_y: number;
+  scale: number;
+  threshold_z: number;
+};
+
+export type DB = {
+  demos: DemosTable;
+  matches: MatchesTable;
+  players: PlayersTable;
+  steam_account_overrides: SteamAccountOverridesTable;
+  teams: TeamsTable;
+  rounds: RoundsTable;
+  player_positions: PlayerPositionsTable;
+  grenade_positions: GrenadePositionsTable;
+  inferno_positions: InfernoPositionsTable;
+  kills: KillsTable;
+  shots: ShotsTable;
+  smokes_start: GrenadeEventTable;
+  flashbangs_explode: GrenadeEventTable;
+  he_grenades_explode: GrenadeEventTable;
+  decoys_start: GrenadeEventTable;
+  bombs_planted: BombEventTable;
+  bombs_defused: BombEventTable;
+  bombs_exploded: BombEventTable;
+  bombs_plant_start: BombEventTable;
+  bombs_defuse_start: BombEventTable;
+  maps: MapsTable;
+};

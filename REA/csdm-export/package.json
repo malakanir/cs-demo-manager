@@ -1,0 +1,31 @@
+{
+  "name": "csdm-export",
+  "version": "0.1.0",
+  "description": "Read-only exporter from a cs-demo-manager PostgreSQL database to per-match SQLite .csdmm files",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "cli": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "bonjour-service": "^1.4.4",
+    "fastify": "^5.12.8",
+    "kysely": "^0.29.8",
+    "pg": "^8.23.1",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}
