@@ -29,6 +29,24 @@ describe('postgres fixture', () => {
     expect(rows[1]!['player_steam_id']).toBe('76561190000000002');
   });
 
+  it('allows nullable killer and assister columns', async () => {
+    const kill = await db.selectFrom('kills').selectAll().executeTakeFirstOrThrow();
+    expect(kill.assister_steam_id).toBeNull();
+    expect(kill.assister_name).toBeNull();
+    expect(kill.is_headshot).toBe(true);
+  });
+
+  it('uses real csdm column names for rounds, teams and shots', async () => {
+    const round = await db.selectFrom('rounds').selectAll().executeTakeFirstOrThrow();
+    expect(round.number).toBe(1);
+    expect(round.team_a_score).toBe(1);
+    const team = await db.selectFrom('teams').selectAll().executeTakeFirstOrThrow();
+    expect(team.current_side).toBe(3);
+    const shot = await db.selectFrom('shots').selectAll().executeTakeFirstOrThrow();
+    expect(shot.player_steam_id).toBe('76561190000000001');
+    expect(shot.player_yaw).toBeCloseTo(90, 5);
+  });
+
   it('stores the steam account override', async () => {
     const overrides = await db.selectFrom('steam_account_overrides').selectAll().execute();
     expect(overrides).toEqual([{ steam_id: '76561190000000001', name: 'AliceOverride' }]);

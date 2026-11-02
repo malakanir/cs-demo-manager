@@ -30,7 +30,7 @@ export type PlayersTable = {
   steam_id: string;
   name: string;
   team_name: string;
-  color: string | null;
+  color: number;
 };
 
 export type SteamAccountOverridesTable = {
@@ -40,7 +40,7 @@ export type SteamAccountOverridesTable = {
 
 export type TeamsTable = {
   match_checksum: string;
-  side: number;
+  current_side: number;
   name: string;
   letter: string;
   score: number;
@@ -48,15 +48,16 @@ export type TeamsTable = {
 
 export type RoundsTable = {
   match_checksum: string;
-  round_number: number;
+  number: number;
   start_tick: number;
   freeze_time_end_tick: number;
   end_tick: number;
   end_officially_tick: number | null;
+  winner_name: string | null;
   winner_side: number | null;
-  end_reason: string | null;
-  score_ct: number;
-  score_t: number;
+  end_reason: number;
+  team_a_score: number;
+  team_b_score: number;
 };
 
 export type PlayerPositionsTable = {
@@ -101,6 +102,7 @@ export type GrenadePositionsTable = {
   projectile_id: string;
   grenade_name: string;
   thrower_steam_id: string;
+  thrower_name: string;
   thrower_side: number;
   ticks: ByteArray;
   x: ByteArray;
@@ -113,6 +115,10 @@ export type InfernoPositionsTable = {
   round_number: number;
   unique_id: string;
   thrower_steam_id: string;
+  thrower_name: string;
+  x: number;
+  y: number;
+  z: number;
   ticks: ByteArray;
   convex_hulls_2d: string[];
 };
@@ -121,23 +127,23 @@ export type KillsTable = {
   match_checksum: string;
   round_number: number;
   tick: number;
-  killer_steam_id: string;
-  killer_name: string;
+  killer_steam_id: string | null;
+  killer_name: string | null;
   killer_side: number | null;
   victim_steam_id: string;
   victim_name: string;
-  victim_side: number | null;
-  assister_steam_id: string;
-  assister_name: string;
+  victim_side: number;
+  assister_steam_id: string | null;
+  assister_name: string | null;
   assister_side: number | null;
   weapon_name: string;
-  headshot: boolean;
+  is_headshot: boolean;
   killer_x: number;
   killer_y: number;
   victim_x: number;
   victim_y: number;
-  through_smoke: boolean;
-  no_scope: boolean;
+  is_through_smoke: boolean;
+  is_no_scope: boolean;
   penetrated_objects: number;
 };
 
@@ -145,9 +151,9 @@ export type ShotsTable = {
   match_checksum: string;
   round_number: number;
   tick: number;
-  shooter_steam_id: string;
-  shooter_name: string;
-  shooter_side: number | null;
+  player_steam_id: string;
+  player_name: string;
+  player_side: number;
   weapon_name: string;
   x: number;
   y: number;
@@ -164,19 +170,65 @@ export type GrenadeEventTable = {
   y: number;
   z: number;
   thrower_steam_id: string;
-  thrower_side: number | null;
+  thrower_name: string;
+  thrower_side: number;
 };
 
-export type BombEventTable = {
+export type BombPlantedTable = {
   match_checksum: string;
   round_number: number;
   tick: number;
-  site: number;
+  site: string;
   x: number;
   y: number;
   z: number;
-  planter_steam_id: string | null;
-  defuser_steam_id: string | null;
+  planter_steam_id: string;
+  planter_name: string;
+};
+
+export type BombDefusedTable = {
+  match_checksum: string;
+  round_number: number;
+  tick: number;
+  site: string;
+  x: number;
+  y: number;
+  z: number;
+  defuser_steam_id: string;
+  defuser_name: string;
+};
+
+export type BombExplodedTable = {
+  match_checksum: string;
+  round_number: number;
+  tick: number;
+  site: string;
+  x: number;
+  y: number;
+  z: number;
+};
+
+export type BombPlantStartTable = {
+  match_checksum: string;
+  round_number: number;
+  tick: number;
+  site: string;
+  x: number;
+  y: number;
+  z: number;
+  planter_steam_id: string;
+  planter_name: string;
+};
+
+export type BombDefuseStartTable = {
+  match_checksum: string;
+  round_number: number;
+  tick: number;
+  x: number;
+  y: number;
+  z: number;
+  defuser_steam_id: string;
+  defuser_name: string;
 };
 
 export type MapsTable = {
@@ -204,10 +256,10 @@ export type DB = {
   flashbangs_explode: GrenadeEventTable;
   he_grenades_explode: GrenadeEventTable;
   decoys_start: GrenadeEventTable;
-  bombs_planted: BombEventTable;
-  bombs_defused: BombEventTable;
-  bombs_exploded: BombEventTable;
-  bombs_plant_start: BombEventTable;
-  bombs_defuse_start: BombEventTable;
+  bombs_planted: BombPlantedTable;
+  bombs_defused: BombDefusedTable;
+  bombs_exploded: BombExplodedTable;
+  bombs_plant_start: BombPlantStartTable;
+  bombs_defuse_start: BombDefuseStartTable;
   maps: MapsTable;
 };

@@ -22,11 +22,17 @@ export async function createFixture(): Promise<{
 }> {
   await createTestDatabase(TEST_DATABASE_URL);
   const db = connectDatabase(TEST_DATABASE_URL);
-  await createFixtureTables(db);
-  const checksum = await insertFixtureMatch(db);
-  return {
-    db,
-    checksum,
-    teardown: () => destroyDatabase(db),
-  };
+  try {
+    await createFixtureTables(db);
+    const checksum = await insertFixtureMatch(db);
+    return {
+      db,
+      checksum,
+      teardown: () => destroyDatabase(db),
+    };
+  } catch (error) {
+    // Never leak the pg pool when table creation or insertion fails.
+    await destroyDatabase(db);
+    throw error;
+  }
 }

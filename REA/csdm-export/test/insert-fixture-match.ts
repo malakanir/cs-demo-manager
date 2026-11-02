@@ -63,8 +63,8 @@ export async function insertFixtureMatch(db: Kysely<DB>): Promise<string> {
   await db
     .insertInto('players')
     .values([
-      { match_checksum: checksum, steam_id: ALICE_STEAM_ID, name: 'Alice', team_name: 'TeamA', color: 'blue' },
-      { match_checksum: checksum, steam_id: BOB_STEAM_ID, name: 'Bob', team_name: 'TeamB', color: 'red' },
+      { match_checksum: checksum, steam_id: ALICE_STEAM_ID, name: 'Alice', team_name: 'TeamA', color: 0 },
+      { match_checksum: checksum, steam_id: BOB_STEAM_ID, name: 'Bob', team_name: 'TeamB', color: 1 },
     ])
     .execute();
 
@@ -76,8 +76,8 @@ export async function insertFixtureMatch(db: Kysely<DB>): Promise<string> {
   await db
     .insertInto('teams')
     .values([
-      { match_checksum: checksum, side: 3, name: 'TeamA', letter: 'A', score: 9 },
-      { match_checksum: checksum, side: 2, name: 'TeamB', letter: 'B', score: 7 },
+      { match_checksum: checksum, current_side: 3, name: 'TeamA', letter: 'A', score: 9 },
+      { match_checksum: checksum, current_side: 2, name: 'TeamB', letter: 'B', score: 7 },
     ])
     .execute();
 
@@ -86,27 +86,29 @@ export async function insertFixtureMatch(db: Kysely<DB>): Promise<string> {
     .values([
       {
         match_checksum: checksum,
-        round_number: 1,
+        number: 1,
         start_tick: 100,
         freeze_time_end_tick: 130,
         end_tick: 3000,
         end_officially_tick: 3010,
+        winner_name: 'TeamA',
         winner_side: 3,
-        end_reason: 'terrorists_won',
-        score_ct: 1,
-        score_t: 0,
+        end_reason: 0,
+        team_a_score: 1,
+        team_b_score: 0,
       },
       {
         match_checksum: checksum,
-        round_number: 2,
+        number: 2,
         start_tick: 3100,
         freeze_time_end_tick: 3130,
         end_tick: 6000,
         end_officially_tick: null,
+        winner_name: 'TeamB',
         winner_side: 2,
-        end_reason: 'cts_won',
-        score_ct: 1,
-        score_t: 1,
+        end_reason: 0,
+        team_a_score: 1,
+        team_b_score: 1,
       },
     ])
     .execute();
@@ -183,6 +185,7 @@ export async function insertFixtureMatch(db: Kysely<DB>): Promise<string> {
       projectile_id: 'proj-1',
       grenade_name: 'smoke',
       thrower_steam_id: ALICE_STEAM_ID,
+      thrower_name: 'Alice',
       thrower_side: 3,
       ticks: int32Buffer([200, 210]),
       x: float32Buffer([-100.0, -90.5]),
@@ -198,6 +201,10 @@ export async function insertFixtureMatch(db: Kysely<DB>): Promise<string> {
       round_number: 1,
       unique_id: 'inf-1',
       thrower_steam_id: ALICE_STEAM_ID,
+      thrower_name: 'Alice',
+      x: 1.5,
+      y: 2.5,
+      z: 3.5,
       ticks: int32Buffer([300, 320]),
       convex_hulls_2d: ['1,2,3,4', '5,6,7,8'],
     })
@@ -215,17 +222,17 @@ export async function insertFixtureMatch(db: Kysely<DB>): Promise<string> {
       victim_steam_id: BOB_STEAM_ID,
       victim_name: 'Bob',
       victim_side: 2,
-      assister_steam_id: '',
-      assister_name: '',
+      assister_steam_id: null,
+      assister_name: null,
       assister_side: null,
       weapon_name: 'weapon_ak47',
-      headshot: true,
+      is_headshot: true,
       killer_x: -500.5,
       killer_y: 1200.75,
       victim_x: 600.25,
       victim_y: -300.5,
-      through_smoke: false,
-      no_scope: false,
+      is_through_smoke: false,
+      is_no_scope: false,
       penetrated_objects: 0,
     })
     .execute();
@@ -236,9 +243,9 @@ export async function insertFixtureMatch(db: Kysely<DB>): Promise<string> {
       match_checksum: checksum,
       round_number: 1,
       tick: 1490,
-      shooter_steam_id: ALICE_STEAM_ID,
-      shooter_name: 'Alice',
-      shooter_side: 3,
+      player_steam_id: ALICE_STEAM_ID,
+      player_name: 'Alice',
+      player_side: 3,
       weapon_name: 'weapon_ak47',
       x: -500.5,
       y: 1200.75,
@@ -259,27 +266,75 @@ export async function insertFixtureMatch(db: Kysely<DB>): Promise<string> {
         y: 20,
         z: 30,
         thrower_steam_id: ALICE_STEAM_ID,
+        thrower_name: 'Alice',
         thrower_side: 3,
       })
       .execute();
   }
 
-  for (const table of ['bombs_planted', 'bombs_defused', 'bombs_exploded', 'bombs_plant_start', 'bombs_defuse_start'] as const) {
-    await db
-      .insertInto(table)
-      .values({
-        match_checksum: checksum,
-        round_number: 1,
-        tick: 2000,
-        site: 1,
-        x: 1,
-        y: 2,
-        z: 3,
-        planter_steam_id: ALICE_STEAM_ID,
-        defuser_steam_id: null,
-      })
-      .execute();
-  }
+  await db
+    .insertInto('bombs_planted')
+    .values({
+      match_checksum: checksum,
+      round_number: 1,
+      tick: 2000,
+      site: 'A',
+      x: 1,
+      y: 2,
+      z: 3,
+      planter_steam_id: ALICE_STEAM_ID,
+      planter_name: 'Alice',
+    })
+    .execute();
+
+  await db
+    .insertInto('bombs_defused')
+    .values({
+      match_checksum: checksum,
+      round_number: 1,
+      tick: 2400,
+      site: 'A',
+      x: 1,
+      y: 2,
+      z: 3,
+      defuser_steam_id: BOB_STEAM_ID,
+      defuser_name: 'Bob',
+    })
+    .execute();
+
+  await db
+    .insertInto('bombs_exploded')
+    .values({ match_checksum: checksum, round_number: 2, tick: 5000, site: 'B', x: 4, y: 5, z: 6 })
+    .execute();
+
+  await db
+    .insertInto('bombs_plant_start')
+    .values({
+      match_checksum: checksum,
+      round_number: 1,
+      tick: 1900,
+      site: 'A',
+      x: 1,
+      y: 2,
+      z: 3,
+      planter_steam_id: ALICE_STEAM_ID,
+      planter_name: 'Alice',
+    })
+    .execute();
+
+  await db
+    .insertInto('bombs_defuse_start')
+    .values({
+      match_checksum: checksum,
+      round_number: 1,
+      tick: 2300,
+      x: 1,
+      y: 2,
+      z: 3,
+      defuser_steam_id: BOB_STEAM_ID,
+      defuser_name: 'Bob',
+    })
+    .execute();
 
   await db
     .insertInto('maps')

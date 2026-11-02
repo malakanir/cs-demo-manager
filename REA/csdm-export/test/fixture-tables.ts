@@ -75,17 +75,17 @@ export async function createFixtureTables(db: Kysely<DB>): Promise<void> {
     steam_id varchar(20) NOT NULL,
     name varchar(64) NOT NULL,
     team_name varchar(64) NOT NULL,
-    color varchar(16)
+    color integer NOT NULL
   )`.execute(db);
 
   await sql`CREATE TABLE steam_account_overrides (
     steam_id varchar(20) PRIMARY KEY,
-    name varchar(64) NOT NULL
+    name text NOT NULL
   )`.execute(db);
 
   await sql`CREATE TABLE teams (
     match_checksum varchar(64) NOT NULL,
-    side smallint NOT NULL,
+    current_side smallint NOT NULL,
     name varchar(64) NOT NULL,
     letter varchar(4) NOT NULL,
     score integer NOT NULL
@@ -93,16 +93,17 @@ export async function createFixtureTables(db: Kysely<DB>): Promise<void> {
 
   await sql`CREATE TABLE rounds (
     match_checksum varchar(64) NOT NULL,
-    round_number integer NOT NULL,
+    number integer NOT NULL,
     start_tick integer NOT NULL,
     freeze_time_end_tick integer NOT NULL,
     end_tick integer NOT NULL,
     end_officially_tick integer,
+    winner_name varchar(64),
     winner_side smallint,
-    end_reason varchar(32),
-    score_ct integer NOT NULL,
-    score_t integer NOT NULL,
-    PRIMARY KEY (match_checksum, round_number)
+    end_reason smallint NOT NULL,
+    team_a_score integer NOT NULL,
+    team_b_score integer NOT NULL,
+    PRIMARY KEY (match_checksum, number)
   )`.execute(db);
 
   await sql`CREATE TABLE player_positions (
@@ -148,6 +149,7 @@ export async function createFixtureTables(db: Kysely<DB>): Promise<void> {
     projectile_id varchar(64) NOT NULL,
     grenade_name varchar(64) NOT NULL,
     thrower_steam_id varchar(20) NOT NULL,
+    thrower_name varchar(64) NOT NULL,
     thrower_side smallint NOT NULL,
     ticks bytea NOT NULL,
     x bytea NOT NULL,
@@ -161,6 +163,10 @@ export async function createFixtureTables(db: Kysely<DB>): Promise<void> {
     round_number integer NOT NULL,
     unique_id varchar(64) NOT NULL,
     thrower_steam_id varchar(20) NOT NULL,
+    thrower_name varchar(64) NOT NULL,
+    x real NOT NULL,
+    y real NOT NULL,
+    z real NOT NULL,
     ticks bytea NOT NULL,
     convex_hulls_2d text[] NOT NULL,
     PRIMARY KEY (match_checksum, round_number, unique_id)
@@ -170,23 +176,23 @@ export async function createFixtureTables(db: Kysely<DB>): Promise<void> {
     match_checksum varchar(64) NOT NULL,
     round_number integer NOT NULL,
     tick integer NOT NULL,
-    killer_steam_id varchar(20) NOT NULL,
-    killer_name varchar(64) NOT NULL,
+    killer_steam_id varchar(20),
+    killer_name varchar(64),
     killer_side smallint,
     victim_steam_id varchar(20) NOT NULL,
     victim_name varchar(64) NOT NULL,
-    victim_side smallint,
+    victim_side smallint NOT NULL,
     assister_steam_id varchar(20),
     assister_name varchar(64),
     assister_side smallint,
     weapon_name varchar(64) NOT NULL,
-    headshot boolean NOT NULL,
-    killer_x real NOT NULL,
-    killer_y real NOT NULL,
-    victim_x real NOT NULL,
-    victim_y real NOT NULL,
-    through_smoke boolean NOT NULL,
-    no_scope boolean NOT NULL,
+    is_headshot boolean NOT NULL,
+    killer_x double precision NOT NULL,
+    killer_y double precision NOT NULL,
+    victim_x double precision NOT NULL,
+    victim_y double precision NOT NULL,
+    is_through_smoke boolean NOT NULL,
+    is_no_scope boolean NOT NULL,
     penetrated_objects integer NOT NULL
   )`.execute(db);
 
@@ -194,13 +200,13 @@ export async function createFixtureTables(db: Kysely<DB>): Promise<void> {
     match_checksum varchar(64) NOT NULL,
     round_number integer NOT NULL,
     tick integer NOT NULL,
-    shooter_steam_id varchar(20) NOT NULL,
-    shooter_name varchar(64) NOT NULL,
-    shooter_side smallint,
+    player_steam_id varchar(20) NOT NULL,
+    player_name varchar(64) NOT NULL,
+    player_side smallint NOT NULL,
     weapon_name varchar(64) NOT NULL,
-    x real NOT NULL,
-    y real NOT NULL,
-    player_yaw real NOT NULL
+    x double precision NOT NULL,
+    y double precision NOT NULL,
+    player_yaw double precision NOT NULL
   )`.execute(db);
 
   for (const table of ['smokes_start', 'flashbangs_explode', 'he_grenades_explode', 'decoys_start']) {
@@ -210,35 +216,79 @@ export async function createFixtureTables(db: Kysely<DB>): Promise<void> {
       tick integer NOT NULL,
       grenade_id varchar(64) NOT NULL,
       projectile_id varchar(64) NOT NULL,
-      x real NOT NULL,
-      y real NOT NULL,
-      z real NOT NULL,
+      x double precision NOT NULL,
+      y double precision NOT NULL,
+      z double precision NOT NULL,
       thrower_steam_id varchar(20) NOT NULL,
-      thrower_side smallint
+      thrower_name varchar(64) NOT NULL,
+      thrower_side smallint NOT NULL
     )`.execute(db);
   }
 
-  for (const table of ['bombs_planted', 'bombs_defused', 'bombs_exploded', 'bombs_plant_start', 'bombs_defuse_start']) {
-    await sql`CREATE TABLE ${sql.raw(table)} (
-      match_checksum varchar(64) NOT NULL,
-      round_number integer NOT NULL,
-      tick integer NOT NULL,
-      site smallint NOT NULL,
-      x real NOT NULL,
-      y real NOT NULL,
-      z real NOT NULL,
-      planter_steam_id varchar(20),
-      defuser_steam_id varchar(20)
-    )`.execute(db);
-  }
+  await sql`CREATE TABLE bombs_planted (
+    match_checksum varchar(64) NOT NULL,
+    round_number integer NOT NULL,
+    tick integer NOT NULL,
+    site varchar(8) NOT NULL,
+    x double precision NOT NULL,
+    y double precision NOT NULL,
+    z double precision NOT NULL,
+    planter_steam_id varchar(20) NOT NULL,
+    planter_name varchar(64) NOT NULL
+  )`.execute(db);
+
+  await sql`CREATE TABLE bombs_defused (
+    match_checksum varchar(64) NOT NULL,
+    round_number integer NOT NULL,
+    tick integer NOT NULL,
+    site varchar(8) NOT NULL,
+    x double precision NOT NULL,
+    y double precision NOT NULL,
+    z double precision NOT NULL,
+    defuser_steam_id varchar(20) NOT NULL,
+    defuser_name varchar(64) NOT NULL
+  )`.execute(db);
+
+  await sql`CREATE TABLE bombs_exploded (
+    match_checksum varchar(64) NOT NULL,
+    round_number integer NOT NULL,
+    tick integer NOT NULL,
+    site varchar(8) NOT NULL,
+    x double precision NOT NULL,
+    y double precision NOT NULL,
+    z double precision NOT NULL
+  )`.execute(db);
+
+  await sql`CREATE TABLE bombs_plant_start (
+    match_checksum varchar(64) NOT NULL,
+    round_number integer NOT NULL,
+    tick integer NOT NULL,
+    site varchar(8) NOT NULL,
+    x double precision NOT NULL,
+    y double precision NOT NULL,
+    z double precision NOT NULL,
+    planter_steam_id varchar(20) NOT NULL,
+    planter_name varchar(64) NOT NULL
+  )`.execute(db);
+
+  await sql`CREATE TABLE bombs_defuse_start (
+    match_checksum varchar(64) NOT NULL,
+    round_number integer NOT NULL,
+    tick integer NOT NULL,
+    x double precision NOT NULL,
+    y double precision NOT NULL,
+    z double precision NOT NULL,
+    defuser_steam_id varchar(20) NOT NULL,
+    defuser_name varchar(64) NOT NULL
+  )`.execute(db);
 
   await sql`CREATE TABLE maps (
     name varchar(64) NOT NULL,
     game varchar(32) NOT NULL,
-    position_x real NOT NULL,
-    position_y real NOT NULL,
+    position_x integer NOT NULL,
+    position_y integer NOT NULL,
     scale real NOT NULL,
-    threshold_z real NOT NULL,
+    threshold_z integer NOT NULL,
     PRIMARY KEY (name, game)
   )`.execute(db);
 }
