@@ -103,7 +103,7 @@ export async function insertFixtureMatch(db: Kysely<DB>): Promise<string> {
         start_tick: 3100,
         freeze_time_end_tick: 3130,
         end_tick: 6000,
-        end_officially_tick: null,
+        end_officially_tick: 6010,
         winner_name: 'TeamB',
         winner_side: 2,
         end_reason: 0,

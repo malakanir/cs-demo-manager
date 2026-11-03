@@ -97,7 +97,7 @@ export async function createFixtureTables(db: Kysely<DB>): Promise<void> {
     start_tick integer NOT NULL,
     freeze_time_end_tick integer NOT NULL,
     end_tick integer NOT NULL,
-    end_officially_tick integer,
+    end_officially_tick integer NOT NULL,
     winner_name varchar(64),
     winner_side smallint,
     end_reason smallint NOT NULL,

@@ -18,7 +18,7 @@ const ROUND_END_REASONS: Record<number, string> = {
   10: 'Draw',
   11: 'HostagesRescued',
   12: 'TargetSaved',
-  13: 'TerroristsNotRescued',
+  13: 'HostagesNotRescued',
   14: 'TerroristsNotEscaped',
   15: 'VipNotEscaped',
   16: 'GameStart',
@@ -33,8 +33,7 @@ function roundEndReasonToName(reason: number): string {
 }
 
 /**
- * Fetches rounds sorted by round number. The csdmm `rounds.end_officially_tick`
- * column is NOT NULL, so a database NULL falls back to `end_tick`.
+ * Fetches rounds sorted by round number.
  */
 export async function fetchRounds(db: Kysely<DB>, checksum: string): Promise<RoundRow[]> {
   const rows = await db
@@ -59,7 +58,7 @@ export async function fetchRounds(db: Kysely<DB>, checksum: string): Promise<Rou
     start_tick: row.start_tick,
     freeze_time_end_tick: row.freeze_time_end_tick,
     end_tick: row.end_tick,
-    end_officially_tick: row.end_officially_tick ?? row.end_tick,
+    end_officially_tick: row.end_officially_tick,
     winner_side: row.winner_side,
     end_reason: roundEndReasonToName(row.end_reason),
     score_ct: row.team_a_score,

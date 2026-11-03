@@ -43,11 +43,16 @@ describe('fetchRounds', () => {
     expect(first.end_officially_tick).toBe(3010);
     expect(first.winner_side).toBe(3);
     expect(first.end_reason).toBe('StillInProgress');
+    expect(first.score_ct).toBe(1);
+    expect(first.score_t).toBe(0);
 
     const second = rounds[1]!;
     expect(second.start_tick).toBe(3100);
-    // Null end_officially_tick falls back to end_tick (csdmm column is NOT NULL).
-    expect(second.end_officially_tick).toBe(6000);
+    // Real csdm rounds.end_officially_tick is NOT NULL; fixture carries a real
+    // value rather than a null fallback.
+    expect(second.end_officially_tick).toBe(6010);
+    expect(second.score_ct).toBe(1);
+    expect(second.score_t).toBe(1);
   });
 
   it('returns an empty list for an unknown checksum', async () => {

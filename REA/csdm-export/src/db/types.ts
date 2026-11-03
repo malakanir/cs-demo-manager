@@ -52,7 +52,7 @@ export type RoundsTable = {
   start_tick: number;
   freeze_time_end_tick: number;
   end_tick: number;
-  end_officially_tick: number | null;
+  end_officially_tick: number;
   winner_name: string | null;
   winner_side: number | null;
   end_reason: number;
