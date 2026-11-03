@@ -6,8 +6,8 @@
 export type PlayerRow = {
   steam_id: string;
   name: string;
-  team_name: string;
-  color: string;
+  team_name: string | null;
+  color: string | null;
 };
 
 export type RoundRow = {

@@ -12,6 +12,7 @@ import type {
   ShotRow,
 } from './rows.js';
 
+
 // Writer for the `.csdmm` per-match SQLite file.
 // Schema: REA/2026-11-02-csdm-mobile-design.md §3.1, with one documented
 // deviation: the `players` table has NO `side` column (side is authoritative
@@ -101,7 +102,7 @@ CREATE INDEX idx_kills_round ON kills(round_number, tick);
 CREATE INDEX idx_shots_round ON shots(round_number, tick);
 `;
 
-function insertAll<Row>(
+function insertAll<Row extends Record<string, unknown>>(
   database: Database.Database,
   sql: string,
   rows: Row[],
@@ -109,11 +110,11 @@ function insertAll<Row>(
   if (rows.length === 0) {
     return;
   }
-  const statement = database.prepare(sql);
   // better-sqlite3 accepts Buffer directly for BLOB columns.
+  const statement = database.prepare<Row>(sql);
   const insert = database.transaction((batch: Row[]) => {
     for (const row of batch) {
-      statement.run(row as unknown as Database.RunResult);
+      statement.run(row);
     }
   });
   insert(rows);
@@ -136,9 +137,12 @@ export class CsdmmWriter {
     const statement = this.database.prepare(
       'INSERT INTO match (key, value) VALUES (?, ?)',
     );
-    for (const [key, value] of Object.entries(pairs)) {
-      statement.run(key, value);
-    }
+    const insert = this.database.transaction((entries: Array<[string, string]>) => {
+      for (const [key, value] of entries) {
+        statement.run(key, value);
+      }
+    });
+    insert(Object.entries(pairs));
   }
 
   insertPlayers(rows: PlayerRow[]): void {
@@ -239,7 +243,7 @@ export class CsdmmWriter {
         `INSERT INTO map_transform (name, game, position_x, position_y, scale, threshold_z)
          VALUES (@name, @game, @position_x, @position_y, @scale, @threshold_z)`,
       )
-      .run(row as unknown as Database.RunResult);
+      .run(row);
   }
 
   close(): void {
