@@ -73,6 +73,16 @@ describe('createServer', () => {
     expect(Buffer.from(response.rawPayload)).toEqual(expected);
   });
 
+  it('returns 404 for path traversal param with valid token', async () => {
+    const server = await createServer({ db, token: TOKEN, outDir });
+    const response = await server.inject({
+      method: 'GET',
+      url: '/api/matches/..%2f..%2fetc%2fpasswd/export',
+      headers: { authorization: `Bearer ${TOKEN}` },
+    });
+    expect(response.statusCode).toBe(404);
+  });
+
   it('returns 404 for an unknown checksum', async () => {
     const server = await createServer({ db, token: TOKEN, outDir });
     const response = await server.inject({

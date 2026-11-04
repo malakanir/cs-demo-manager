@@ -27,7 +27,7 @@ function uint8Buffer(values: number[]): Buffer {
 }
 
 /**
- * Inserts one synthetic match (checksum `fixt`, 2 rounds, 2 players).
+ * Inserts one synthetic match (checksum `deadbeefdeadbeef`, 2 rounds, 2 players).
  * Returns the inserted checksum.
  */
 export async function insertFixtureMatch(db: Kysely<DB>): Promise<string> {

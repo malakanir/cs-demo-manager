@@ -8,7 +8,7 @@ import type { DB } from '../src/db/types.js';
 // recreated on every run.
 
 export const FIXTURE_DB_NAME = 'csdm_export_test';
-export const FIXTURE_CHECKSUM = 'fixt';
+export const FIXTURE_CHECKSUM = 'deadbeefdeadbeef';
 export const FIXTURE_MAP = 'de_mirage';
 
 function quoteIdent(name: string): string {

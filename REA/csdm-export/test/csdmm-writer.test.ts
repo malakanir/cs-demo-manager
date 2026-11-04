@@ -4,6 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CsdmmWriter } from '../src/export/csdmm-writer.js';
+import { FIXTURE_CHECKSUM } from './fixture-tables.js';
 
 const dir = mkdtempSync(join(tmpdir(), 'csdmm-writer-'));
 const dbPath = join(dir, 'fixt.csdmm');
@@ -57,7 +58,7 @@ function syntheticBuffers(): Record<(typeof BLOB_COLUMNS)[number], Buffer> {
 describe('csdmm writer', () => {
   it('creates the §3.1 schema and round-trips meta, players and blobs', () => {
     const writer = CsdmmWriter.open(dbPath);
-    writer.setMeta({ format_version: '1', checksum: 'fixt', map_name: 'de_mirage', game: 'cs2' });
+    writer.setMeta({ format_version: '1', checksum: FIXTURE_CHECKSUM, map_name: 'de_mirage', game: 'cs2' });
     writer.insertPlayers([
       { steam_id: '76561190000000001', name: 'Alice', team_name: 'TeamA', color: '0' },
     ]);
@@ -114,7 +115,7 @@ describe('csdmm writer', () => {
   it('accepts synthetic rows through every insert method without SQL errors', () => {
     const path = join(dir, 'all-tables.csdmm');
     const writer = CsdmmWriter.open(path);
-    writer.setMeta({ format_version: '1', checksum: 'fixt' });
+    writer.setMeta({ format_version: '1', checksum: FIXTURE_CHECKSUM });
     writer.insertPlayers([
       { steam_id: '76561190000000001', name: 'Alice', team_name: 'TeamA', color: '0' },
       { steam_id: '76561190000000002', name: 'Bob', team_name: null, color: null },

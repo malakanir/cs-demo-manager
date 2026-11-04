@@ -14,7 +14,7 @@ describe('fetchMatchMeta', () => {
   it('returns the fixture match meta with csdmm field names', async () => {
     const meta = await fetchMatchMeta(db, FIXTURE_CHECKSUM);
     expect(meta).not.toBeNull();
-    expect(meta!.checksum).toBe('fixt');
+    expect(meta!.checksum).toBe(FIXTURE_CHECKSUM);
     expect(meta!.mapName).toBe('de_mirage');
     expect(meta!.tickrate).toBe(64);
     expect(meta!.tickCount).toBe(1280);

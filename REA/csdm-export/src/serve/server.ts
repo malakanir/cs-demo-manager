@@ -27,7 +27,7 @@ export async function createServer(opts: ServerOptions): Promise<FastifyInstance
     }
     // Exact match is fine: LAN-only, token rotates on every serve start.
     if (request.headers.authorization !== `Bearer ${opts.token}`) {
-      await reply.code(401).send({ error: 'Unauthorized' });
+      return reply.code(401).send({ error: 'Unauthorized' });
     }
   });
 
@@ -65,10 +65,16 @@ export async function createServer(opts: ServerOptions): Promise<FastifyInstance
 
   server.get<{ Params: { checksum: string } }>('/api/matches/:checksum/export', async (request, reply) => {
     const { checksum } = request.params;
+    // Demos checksums are crc64 hex (≤16 chars, see csdm get-demo-checksum-from-file-stats.ts).
+    // Anything else can escape outDir — reject before touching the filesystem.
+    if (!/^[a-f0-9]{1,16}$/i.test(checksum)) {
+      return reply.code(404).send({ error: 'Not found' });
+    }
     const filePath = join(opts.outDir, `${checksum}.csdmm`);
 
+    let fileStat;
     try {
-      await stat(filePath);
+      fileStat = await stat(filePath);
     } catch {
       // Auto-export once on miss (spec §4.1); unknown checksum → 404.
       try {
@@ -76,9 +82,13 @@ export async function createServer(opts: ServerOptions): Promise<FastifyInstance
       } catch {
         return reply.code(404).send({ error: 'Not found' });
       }
+      try {
+        fileStat = await stat(filePath);
+      } catch {
+        return reply.code(404).send({ error: 'Not found' });
+      }
     }
 
-    const fileStat = await stat(filePath);
     return reply
       .header('content-type', 'application/octet-stream')
       .header('content-length', fileStat.size)
