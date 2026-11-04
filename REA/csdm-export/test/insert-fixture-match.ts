@@ -314,13 +314,26 @@ export async function insertFixtureMatch(db: Kysely<DB>): Promise<string> {
     })
     .execute();
 
-  for (const table of ['smokes_start', 'flashbangs_explode', 'he_grenades_explode', 'decoys_start'] as const) {
+  // Interleaved ticks across tables prove the merge-sort in fetchGrenadeEvents.
+  const grenadeEventTicks = {
+    smokes_start: 1000,
+    flashbangs_explode: 900,
+    he_grenades_explode: 1100,
+    decoys_start: 800,
+  } as const;
+
+  for (const [table, type] of [
+    ['smokes_start', 'smoke_start'],
+    ['flashbangs_explode', 'flash_explode'],
+    ['he_grenades_explode', 'he_explode'],
+    ['decoys_start', 'decoy_start'],
+  ] as const) {
     await db
       .insertInto(table)
       .values({
         match_checksum: checksum,
         round_number: 1,
-        tick: 1000,
+        tick: grenadeEventTicks[table],
         grenade_id: `gren-${table}`,
         projectile_id: `proj-${table}`,
         x: 10,
