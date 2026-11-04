@@ -9,8 +9,9 @@ function isPrivateIpv4(address: string): boolean {
 }
 
 /**
- * First non-internal IPv4 address, private ranges preferred
- * (192.168.* then 10.* then 172.16–31.*). Null when offline.
+ * First non-internal IPv4 address within private ranges
+ * (192.168.* then 10.* then 172.16–31.*). Null when offline or
+ * when only public addresses exist — the QR pairing URL is LAN-only.
  */
 export function getLanIpv4(): string | null {
   const candidates: NetworkInterfaceInfo[] = Object.values(networkInterfaces()).flat().filter((info): info is NetworkInterfaceInfo => {
@@ -21,7 +22,7 @@ export function getLanIpv4(): string | null {
     const hit = candidates.find((info) => re.test(info.address));
     if (hit) return hit.address;
   }
-  return candidates[0]?.address ?? null;
+  return null;
 }
 
 /**
@@ -49,7 +50,8 @@ export function advertiseService(name: string, port: number): void {
 
 /** Unpublishes and stops the mDNS stack; no-op when not advertising. */
 export function stopAdvertise(): void {
-  if (!bonjour) return;
-  bonjour.unpublishAll(() => bonjour?.destroy());
+  const b = bonjour;
+  if (!b) return;
   bonjour = null;
+  b.unpublishAll(() => b.destroy());
 }
