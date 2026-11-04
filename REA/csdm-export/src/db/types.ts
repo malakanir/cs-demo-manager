@@ -206,6 +206,8 @@ export type BombExplodedTable = {
   x: number;
   y: number;
   z: number;
+  planter_steam_id: string;
+  planter_name: string;
 };
 
 export type BombPlantStartTable = {

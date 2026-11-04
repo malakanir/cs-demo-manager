@@ -256,7 +256,9 @@ export async function createFixtureTables(db: Kysely<DB>): Promise<void> {
     site varchar(8) NOT NULL,
     x double precision NOT NULL,
     y double precision NOT NULL,
-    z double precision NOT NULL
+    z double precision NOT NULL,
+    planter_steam_id varchar(20) NOT NULL,
+    planter_name varchar(64) NOT NULL
   )`.execute(db);
 
   await sql`CREATE TABLE bombs_plant_start (

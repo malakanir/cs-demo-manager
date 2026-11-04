@@ -304,7 +304,17 @@ export async function insertFixtureMatch(db: Kysely<DB>): Promise<string> {
 
   await db
     .insertInto('bombs_exploded')
-    .values({ match_checksum: checksum, round_number: 2, tick: 5000, site: 'B', x: 4, y: 5, z: 6 })
+    .values({
+      match_checksum: checksum,
+      round_number: 2,
+      tick: 5000,
+      site: 'B',
+      x: 4,
+      y: 5,
+      z: 6,
+      planter_steam_id: ALICE_STEAM_ID,
+      planter_name: 'Alice',
+    })
     .execute();
 
   await db
