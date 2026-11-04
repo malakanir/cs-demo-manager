@@ -30,10 +30,13 @@ describe('postgres fixture', () => {
   });
 
   it('allows nullable killer and assister columns', async () => {
-    const kill = await db.selectFrom('kills').selectAll().executeTakeFirstOrThrow();
-    expect(kill.assister_steam_id).toBeNull();
-    expect(kill.assister_name).toBeNull();
-    expect(kill.is_headshot).toBe(true);
+    const kills = await db.selectFrom('kills').selectAll().orderBy('tick').execute();
+    expect(kills).toHaveLength(2);
+    const headshot = kills.find((kill) => kill.is_headshot);
+    expect(headshot?.assister_steam_id).toBeNull();
+    expect(headshot?.assister_name).toBeNull();
+    const wallbang = kills.find((kill) => !kill.is_headshot);
+    expect(wallbang?.is_through_smoke).toBe(true);
   });
 
   it('uses real csdm column names for rounds, teams and shots', async () => {
@@ -42,9 +45,10 @@ describe('postgres fixture', () => {
     expect(round.team_a_score).toBe(1);
     const team = await db.selectFrom('teams').selectAll().executeTakeFirstOrThrow();
     expect(team.current_side).toBe(3);
-    const shot = await db.selectFrom('shots').selectAll().executeTakeFirstOrThrow();
-    expect(shot.player_steam_id).toBe('76561190000000001');
-    expect(shot.player_yaw).toBeCloseTo(90, 5);
+    const shots = await db.selectFrom('shots').selectAll().execute();
+    expect(shots).toHaveLength(3);
+    const alice = shots.find((shot) => shot.player_steam_id === '76561190000000001');
+    expect(alice?.player_yaw).toBeCloseTo(90, 5);
   });
 
   it('stores the steam account override', async () => {

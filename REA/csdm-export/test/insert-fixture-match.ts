@@ -237,6 +237,35 @@ export async function insertFixtureMatch(db: Kysely<DB>): Promise<string> {
     })
     .execute();
 
+  // Second kill: wallbang without headshot and with an assister, in a later
+  // round so round/tick ordering is exercised.
+  await db
+    .insertInto('kills')
+    .values({
+      match_checksum: checksum,
+      round_number: 2,
+      tick: 4700,
+      killer_steam_id: BOB_STEAM_ID,
+      killer_name: 'Bob',
+      killer_side: 2,
+      victim_steam_id: ALICE_STEAM_ID,
+      victim_name: 'Alice',
+      victim_side: 3,
+      assister_steam_id: ALICE_STEAM_ID,
+      assister_name: 'Alice',
+      assister_side: 3,
+      weapon_name: 'weapon_awp',
+      is_headshot: false,
+      killer_x: 10.5,
+      killer_y: 20.25,
+      victim_x: 30.125,
+      victim_y: 40.0625,
+      is_through_smoke: true,
+      is_no_scope: true,
+      penetrated_objects: 2,
+    })
+    .execute();
+
   await db
     .insertInto('shots')
     .values({
@@ -250,6 +279,38 @@ export async function insertFixtureMatch(db: Kysely<DB>): Promise<string> {
       x: -500.5,
       y: 1200.75,
       player_yaw: 90,
+    })
+    .execute();
+
+  await db
+    .insertInto('shots')
+    .values({
+      match_checksum: checksum,
+      round_number: 1,
+      tick: 1520,
+      player_steam_id: BOB_STEAM_ID,
+      player_name: 'Bob',
+      player_side: 2,
+      weapon_name: 'weapon_deagle',
+      x: 600.25,
+      y: -300.5,
+      player_yaw: 137.5,
+    })
+    .execute();
+
+  await db
+    .insertInto('shots')
+    .values({
+      match_checksum: checksum,
+      round_number: 2,
+      tick: 4500,
+      player_steam_id: ALICE_STEAM_ID,
+      player_name: 'Alice',
+      player_side: 3,
+      weapon_name: 'weapon_awp',
+      x: 10.5,
+      y: 20.25,
+      player_yaw: 270,
     })
     .execute();
 
