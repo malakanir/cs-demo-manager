@@ -74,6 +74,8 @@ final playbackDataProvider = Provider<ViewerPlayback>(
   (ref) => throw UnimplementedError(
     'Override playbackDataProvider with the loaded MatchData',
   ),
+  // Declared scoped so a ProviderScope around the viewer can override it.
+  dependencies: const [],
 );
 
 /// Owns the playback clock. The screen drives [PlaybackController.tickAt]
@@ -184,4 +186,7 @@ class PlaybackController extends Notifier<PlaybackState> {
 }
 
 final playbackControllerProvider = NotifierProvider<PlaybackController,
-    PlaybackState>(PlaybackController.new);
+    PlaybackState>(
+  PlaybackController.new,
+  dependencies: [playbackDataProvider],
+);

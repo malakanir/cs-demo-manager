@@ -43,7 +43,7 @@ final radarImageProvider = FutureProvider<ui.Image>((ref) async {
   final descriptor = await ui.ImageDescriptor.encoded(buffer);
   final codec = await descriptor.instantiateCodec();
   return (await codec.getNextFrame()).image;
-});
+}, dependencies: [playbackDataProvider]);
 
 /// The 2D replay viewer: full-bleed radar canvas, floating chrome,
 /// landscape-first.

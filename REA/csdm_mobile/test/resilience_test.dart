@@ -67,6 +67,10 @@ void main() {
   });
 
   group('viewer', () {
+    // rootBundle caches the loadString future; one created in a previous test's
+    // fake-async zone never completes for the next test.
+    setUp(() => rootBundle.evict('assets/maps.json'));
+
     Future<void> pumpViewer(WidgetTester tester, MatchData data) async {
       tester.view.physicalSize = const Size(1600, 900);
       tester.view.devicePixelRatio = 1.0;
@@ -86,12 +90,43 @@ void main() {
       }
     }
 
+    testWidgets('viewer works under a nested ProviderScope like the real app', (tester) async {
+      tester.view.physicalSize = const Size(1600, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final data = MatchData.load(createFixtureCsdmm(dir));
+      final playback = ViewerPlayback(data: data, tickrate: data.tickrate);
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: ProviderScope(
+              overrides: [playbackDataProvider.overrideWithValue(playback)],
+              child: ViewerScreen(checksum: data.checksum),
+            ),
+          ),
+        ),
+      );
+      for (var i = 0; i < 10; i++) {
+        await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+        await tester.pump();
+      }
+      expect(tester.takeException(), isNull);
+      expect(find.byType(UnsupportedMapScreen), findsNothing);
+      expect(find.text('0:45'), findsOneWidget);
+    });
+
     testWidgets('map without a radar asset shows the unsupported screen', (tester) async {
       final path = createFixtureCsdmm(dir);
       update(path, "UPDATE match SET value = 'de_nowhere' WHERE key = 'map_name'");
       final data = MatchData.load(path);
 
       await pumpViewer(tester, data);
+      // Asset loading runs on the real event loop; wait (bounded) for the result.
+      for (var i = 0; i < 40 && find.byType(UnsupportedMapScreen).evaluate().isEmpty; i++) {
+        await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+        await tester.pump();
+      }
 
       expect(find.byType(UnsupportedMapScreen), findsOneWidget);
       expect(find.textContaining('de_nowhere'), findsOneWidget);
