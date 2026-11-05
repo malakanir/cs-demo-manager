@@ -1,12 +1,13 @@
 import Database from 'better-sqlite3';
-import { mkdtemp, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readdir, rm, writeFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { Kysely } from 'kysely';
 import { createFixture, FIXTURE_CHECKSUM } from './fixture.js';
 import type { DB } from '../src/db/types.js';
 import { exportMatch } from '../src/export/export-match.js';
+import { CsdmmWriter } from '../src/export/csdmm-writer.js';
 
 // Mirrors the synthetic buffers built in insert-fixture-match.ts; the exported
 // .csdmm blobs must be byte-identical end-to-end.
@@ -148,5 +149,38 @@ describe('exportMatch', () => {
 
   it('throws for an unknown checksum', async () => {
     await expect(exportMatch(db, 'nope', outDir)).rejects.toThrow('Match not found');
+  });
+
+  it('recovers from a stale garbage .tmp file left by a previous crash', async () => {
+    const tmpPath = join(outDir, `${FIXTURE_CHECKSUM}.csdmm.tmp`);
+    await writeFile(tmpPath, Buffer.from('not a sqlite database at all'));
+
+    const { filePath } = await exportMatch(db, FIXTURE_CHECKSUM, outDir);
+    expect(filePath).toBe(join(outDir, `${FIXTURE_CHECKSUM}.csdmm`));
+
+    const sqlite = new Database(filePath);
+    try {
+      const meta = sqlite.prepare("SELECT value FROM match WHERE key = 'checksum'").get() as { value: string };
+      expect(meta.value).toBe(FIXTURE_CHECKSUM);
+    } finally {
+      sqlite.close();
+    }
+  });
+
+  it('cleans up the tmp file when the writer fails mid-export', async () => {
+    const tmpPath = join(outDir, `${FIXTURE_CHECKSUM}.csdmm.tmp`);
+    // Force a deterministic failure after the writer opened the tmp file.
+    const spy = vi
+      .spyOn(CsdmmWriter.prototype, 'insertRounds')
+      .mockImplementation(() => {
+        throw new Error('boom');
+      });
+
+    try {
+      await expect(exportMatch(db, FIXTURE_CHECKSUM, outDir)).rejects.toThrow('boom');
+    } finally {
+      spy.mockRestore();
+    }
+    await expect(stat(tmpPath)).rejects.toThrow();
   });
 });

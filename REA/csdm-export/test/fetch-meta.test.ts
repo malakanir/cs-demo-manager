@@ -51,6 +51,8 @@ describe('fetchRounds', () => {
     // Real csdm rounds.end_officially_tick is NOT NULL; fixture carries a real
     // value rather than a null fallback.
     expect(second.end_officially_tick).toBe(6010);
+    // Half-time switch: round 2 team_a_side=2 (T), so ct/t scores swap sides
+    // (score_ct comes from team_b_score here).
     expect(second.score_ct).toBe(1);
     expect(second.score_t).toBe(1);
   });

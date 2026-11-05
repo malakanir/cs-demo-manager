@@ -1,4 +1,4 @@
-import { mkdir, rename } from 'node:fs/promises';
+import { mkdir, rename, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Kysely } from 'kysely';
 import type { DB } from '../db/types.js';
@@ -51,6 +51,10 @@ export async function exportMatch(
 
   const filePath = join(outDir, `${checksum}.csdmm`);
   const tmpPath = `${filePath}.tmp`;
+  // A leftover .tmp (crash, Ctrl-C, disk-full mid-write) would make the writer
+  // open the stale SQLite file and fail on SCHEMA; also defuses concurrent
+  // exporters racing on the same path.
+  await rm(tmpPath, { force: true, recursive: true });
   const writer = CsdmmWriter.open(tmpPath);
   try {
     writer.setMeta({
@@ -75,6 +79,9 @@ export async function exportMatch(
     writer.insertGrenadeEvents(grenadeEvents);
     writer.insertBombEvents(bombEvents);
     writer.insertMapTransform(mapTransform);
+  } catch (error) {
+    await rm(tmpPath, { force: true, recursive: true });
+    throw error;
   } finally {
     writer.close();
   }

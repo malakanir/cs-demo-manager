@@ -56,6 +56,7 @@ export type RoundsTable = {
   winner_name: string | null;
   winner_side: number | null;
   end_reason: number;
+  team_a_side: number;
   team_a_score: number;
   team_b_score: number;
 };

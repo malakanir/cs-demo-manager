@@ -47,6 +47,7 @@ export async function fetchRounds(db: Kysely<DB>, checksum: string): Promise<Rou
       'end_officially_tick',
       'winner_side',
       'end_reason',
+      'team_a_side',
       'team_a_score',
       'team_b_score',
     ])
@@ -61,7 +62,8 @@ export async function fetchRounds(db: Kysely<DB>, checksum: string): Promise<Rou
     end_officially_tick: row.end_officially_tick,
     winner_side: row.winner_side,
     end_reason: roundEndReasonToName(row.end_reason),
-    score_ct: row.team_a_score,
-    score_t: row.team_b_score,
+    // team_a_side is per-round and flips at half-time; scores follow the side.
+    score_ct: row.team_a_side === 3 ? row.team_a_score : row.team_b_score,
+    score_t: row.team_a_side === 3 ? row.team_b_score : row.team_a_score,
   }));
 }

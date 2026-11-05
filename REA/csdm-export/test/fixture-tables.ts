@@ -101,6 +101,7 @@ export async function createFixtureTables(db: Kysely<DB>): Promise<void> {
     winner_name varchar(64),
     winner_side smallint,
     end_reason smallint NOT NULL,
+    team_a_side smallint NOT NULL,
     team_a_score integer NOT NULL,
     team_b_score integer NOT NULL,
     PRIMARY KEY (match_checksum, number)

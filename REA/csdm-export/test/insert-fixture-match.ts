@@ -94,6 +94,7 @@ export async function insertFixtureMatch(db: Kysely<DB>): Promise<string> {
         winner_name: 'TeamA',
         winner_side: 3,
         end_reason: 0,
+        team_a_side: 3,
         team_a_score: 1,
         team_b_score: 0,
       },
@@ -107,6 +108,8 @@ export async function insertFixtureMatch(db: Kysely<DB>): Promise<string> {
         winner_name: 'TeamB',
         winner_side: 2,
         end_reason: 0,
+        // Half-time side switch: team A started CT (round 1) and is T now.
+        team_a_side: 2,
         team_a_score: 1,
         team_b_score: 1,
       },
