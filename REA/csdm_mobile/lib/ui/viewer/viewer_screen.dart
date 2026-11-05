@@ -15,6 +15,7 @@ import '../../render/radar_painter.dart';
 import '../../render/view_transform.dart';
 import 'gestures.dart';
 import 'kill_feed.dart';
+import 'teams_panel.dart';
 import 'playback_bar.dart';
 
 /// Chrome auto-hides this long after the last touch while playing.
@@ -127,12 +128,25 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
     });
   }
 
-  void _onCanvasTap() {
+  final Set<String> _focused = {};
+
+  void _onCanvasTap(Offset position) {
     if (!_chromeVisible) {
       // First touch on hidden chrome only reveals it (no accidental scrub).
       setState(() => _chromeVisible = true);
       _scheduleHide();
       return;
+    }
+    final state = ref.read(playbackControllerProvider);
+    final vt = _transform;
+    final timeline = state.timeline;
+    if (vt != null && timeline != null) {
+      final hit = hitTestPlayer(timeline: timeline, tick: state.tick, vt: vt, screen: position);
+      if (hit != null) {
+        // Tap a player to focus it (thicker ring + name); tap again to clear.
+        setState(() => _focused.contains(hit) ? _focused.remove(hit) : _focused.add(hit));
+        return;
+      }
     }
     if (ref.read(playbackControllerProvider).isPlaying) {
       setState(() => _chromeVisible = false);
@@ -195,6 +209,7 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
         .toList(growable: false);
 
     final fx = _effectsFor(data, state.roundNumber);
+    final playerNames = {for (final p in data.players) p.steamId: p.name};
 
     return Scaffold(
       backgroundColor: const Color(0xFF1B1F23),
@@ -207,7 +222,7 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
               Positioned.fill(
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: _onCanvasTap,
+                  onTapUp: (d) => _onCanvasTap(d.localPosition),
                   onScaleStart: (_) => _onInteraction(),
                   onScaleUpdate: (details) {
                     _onInteraction();
@@ -223,6 +238,8 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
                       vt: vt,
                       zoom: vt.zoom,
                       kills: kills,
+                      focusedIds: _focused,
+                      playerNames: playerNames,
                     ),
                     child: CustomPaint(
                       painter: EffectsPainter(
@@ -252,7 +269,7 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
                       state.tick,
                       state.tickrate,
                     ),
-                    names: {for (final p in data.players) p.steamId: p.name},
+                    names: playerNames,
                   ),
                 ),
               ),
@@ -276,6 +293,20 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
                   top: 0,
                   bottom: 0,
                   child: RoundsRail(state: state),
+                ),
+                // Teams panel sits below the kill feed (4 rows max).
+                Positioned(
+                  right: 8,
+                  top: 120,
+                  bottom: 96,
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: TeamsPanel(
+                      players: data.players,
+                      timeline: timeline,
+                      tick: state.tick,
+                    ),
+                  ),
                 ),
                 Positioned(
                   left: 0,

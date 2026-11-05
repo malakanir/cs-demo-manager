@@ -124,7 +124,7 @@ class PlayersPainter extends CustomPainter {
       yawLine,
     );
 
-    if (zoom > 2) {
+    if (zoom > 2 || focusedIds.contains(steamId)) {
       _drawName(canvas, steamId, center);
     }
   }
@@ -203,4 +203,27 @@ class PlayersPainter extends CustomPainter {
         !mapEquals(oldDelegate.playerNames, playerNames) ||
         !listEquals(oldDelegate.kills, kills);
   }
+}
+
+/// Nearest player within [radius] screen px of [screen] at [tick], or null.
+/// Used for tap-to-focus (which also reveals the name below 2x zoom).
+String? hitTestPlayer({
+  required RoundTimeline timeline,
+  required int tick,
+  required ViewTransform vt,
+  required Offset screen,
+  double radius = 24,
+}) {
+  String? best;
+  var bestDistance = radius;
+  for (final steamId in timeline.steamIds) {
+    final player = timeline.playerAt(steamId, tick);
+    if (player == null) continue;
+    final d = (vt.worldToScreen(Offset(player.x, player.y)) - screen).distance;
+    if (d <= bestDistance) {
+      bestDistance = d;
+      best = steamId;
+    }
+  }
+  return best;
 }

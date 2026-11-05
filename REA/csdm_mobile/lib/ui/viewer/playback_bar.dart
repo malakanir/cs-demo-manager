@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../playback/playback_controller.dart';
+import 'scrub_gesture.dart';
 import 'viewer_screen.dart';
 
 /// Bottom playback chrome: scrub bar with kill/freeze markers + play + speed.
@@ -54,28 +55,14 @@ class PlaybackBar extends ConsumerWidget {
             onPressed: controller.toggle,
           ),
           Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final width = constraints.maxWidth;
-                return GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onHorizontalDragUpdate: (details) => controller.seekToPercent(
-                    (details.localPosition.dx / width).clamp(0.0, 1.0),
-                  ),
-                  onTapUp: (details) => controller.seekToPercent(
-                    (details.localPosition.dx / width).clamp(0.0, 1.0),
-                  ),
-                  child: CustomPaint(
-                    painter: BarPainter(
-                      percent: percent,
-                      kills: kills,
-                      freezePercent: freezePercent,
-                      plants: plants,
-                    ),
-                    child: const SizedBox.expand(),
-                  ),
-                );
-              },
+            child: ScrubTrack(
+              onSeek: controller.seekToPercent,
+              painter: BarPainter(
+                percent: percent,
+                kills: kills,
+                freezePercent: freezePercent,
+                plants: plants,
+              ),
             ),
           ),
           SpeedButton(speed: state.speed, onSpeed: controller.setSpeed),
@@ -250,15 +237,32 @@ class RoundsRail extends ConsumerWidget {
                   padding: EdgeInsets.zero,
                   minimumSize: const Size(40, 32),
                 ),
-                child: Text(
-                  '${round.roundNumber}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: round.roundNumber == state.roundNumber
-                        ? const Color(0xFFF29423)
-                        : Colors.white,
-                    fontSize: 13,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (round.winnerSide != null)
+                      Container(
+                        key: Key('round-winner-${round.roundNumber}'),
+                        width: 6,
+                        height: 6,
+                        margin: const EdgeInsets.only(right: 4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: round.winnerSide == 3
+                              ? const Color(0xFF378EF0)
+                              : const Color(0xFFF29423),
+                        ),
+                      ),
+                    Text(
+                      '${round.roundNumber}',
+                      style: TextStyle(
+                        color: round.roundNumber == state.roundNumber
+                            ? const Color(0xFFF29423)
+                            : Colors.white,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
