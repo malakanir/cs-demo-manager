@@ -11,7 +11,9 @@ class CsdmmApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'CS2 Replays',
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
+      ),
       home: const Scaffold(body: Center(child: Text('CS2 Replays'))),
     );
   }
