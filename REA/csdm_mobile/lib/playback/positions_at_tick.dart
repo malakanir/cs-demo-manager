@@ -132,6 +132,20 @@ class RoundTimeline {
 
   bool contains(String steamId) => _players.containsKey(steamId);
 
+  /// Side from the player's first state sample (3 = CT, 2 = T), or null when
+  /// the player has no state at all.
+  ///
+  /// The `.csdmm` players table has no side column, so this is the authoritative
+  /// source used to colour players even when [playerAt] returns a null state
+  /// (a tick before their first state sample).
+  int? sideOf(String steamId) {
+    final player = _players[steamId];
+    if (player == null || player.states.isEmpty) {
+      return null;
+    }
+    return player.states.first.side;
+  }
+
   /// Position of [steamId] at [tick], or null when the player is unknown, the
   /// tick is before their first sample, or their samples ended before [tick].
   PlayerAtTick? playerAt(String steamId, int tick) {

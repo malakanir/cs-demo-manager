@@ -288,4 +288,33 @@ void main() {
       expect(timeline.playerAt('bob', 150), isNull);
     });
   });
+
+  group('sideOf', () {
+    test('returns the side from the first state sample', () {
+      final timeline = buildRoundTimeline(
+        movements: buildMovements(ticks: [100], x: [0], y: [0]),
+        states: buildStates(ticks: [100, 200], side: [3, 2]),
+      );
+
+      expect(timeline.sideOf('alice'), 3);
+    });
+
+    test('returns null when the player has no state samples', () {
+      final timeline = buildRoundTimeline(
+        movements: buildMovements(ticks: [100], x: [0], y: [0]),
+        states: buildStates(ticks: [], side: []),
+      );
+
+      expect(timeline.sideOf('alice'), isNull);
+    });
+
+    test('returns null for an unknown player', () {
+      final timeline = buildRoundTimeline(
+        movements: buildMovements(ticks: [100], x: [0], y: [0]),
+        states: buildStates(ticks: [100]),
+      );
+
+      expect(timeline.sideOf('bob'), isNull);
+    });
+  });
 }
