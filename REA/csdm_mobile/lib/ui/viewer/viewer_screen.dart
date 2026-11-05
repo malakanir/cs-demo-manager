@@ -6,12 +6,15 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../models/csdmm_database.dart';
 import '../../models/map_params.dart';
 import '../../playback/playback_controller.dart';
+import '../../render/effects_painter.dart';
 import '../../render/players_painter.dart';
 import '../../render/radar_painter.dart';
 import '../../render/view_transform.dart';
 import 'gestures.dart';
+import 'kill_feed.dart';
 import 'playback_bar.dart';
 
 /// Chrome auto-hides this long after the last touch while playing.
@@ -40,6 +43,20 @@ final radarImageProvider = FutureProvider<ui.Image>((ref) async {
 
 /// The 2D replay viewer: full-bleed radar canvas, floating chrome,
 /// landscape-first.
+class _RoundEffects {
+  const _RoundEffects({
+    required this.grenades,
+    required this.infernos,
+    required this.shots,
+    required this.grenadeEvents,
+  });
+
+  final List<GrenadeRow> grenades;
+  final List<InfernoRow> infernos;
+  final List<ShotRow> shots;
+  final List<GrenadeEventRow> grenadeEvents;
+}
+
 class ViewerScreen extends ConsumerStatefulWidget {
   const ViewerScreen({super.key, required this.checksum});
 
@@ -177,6 +194,8 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
         )
         .toList(growable: false);
 
+    final fx = _effectsFor(data, state.roundNumber);
+
     return Scaffold(
       backgroundColor: const Color(0xFF1B1F23),
       body: LayoutBuilder(
@@ -205,7 +224,35 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
                       zoom: vt.zoom,
                       kills: kills,
                     ),
-                    child: const SizedBox.expand(),
+                    child: CustomPaint(
+                      painter: EffectsPainter(
+                        grenades: fx.grenades,
+                        infernos: fx.infernos,
+                        shots: fx.shots,
+                        grenadeEvents: fx.grenadeEvents,
+                        tick: state.tick,
+                        tickrate: state.tickrate,
+                        vt: vt,
+                        zoom: vt.zoom,
+                      ),
+                      child: const SizedBox.expand(),
+                    ),
+                  ),
+                ),
+              ),
+              // Kill feed: top-right, max 45% width, below the timer row.
+              Positioned(
+                top: 8,
+                right: 8,
+                width: constraints.biggest.width * 0.45,
+                child: IgnorePointer(
+                  child: KillFeed(
+                    kills: visibleKills(
+                      data.kills.where((k) => k.roundNumber == state.roundNumber).toList(growable: false),
+                      state.tick,
+                      state.tickrate,
+                    ),
+                    names: {for (final p in data.players) p.steamId: p.name},
                   ),
                 ),
               ),
@@ -247,6 +294,25 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
         },
       ),
     );
+  }
+
+  int? _fxRound;
+  late _RoundEffects _fx;
+
+  /// Round-filtered effect lists, rebuilt only when the round changes so the
+  /// painter's identity-based shouldRepaint stays cheap.
+  _RoundEffects _effectsFor(MatchData data, int round) {
+    if (_fxRound != round) {
+      final e = data.effects;
+      _fx = _RoundEffects(
+        grenades: e.grenades.where((g) => g.roundNumber == round).toList(growable: false),
+        infernos: e.infernos.where((g) => g.roundNumber == round).toList(growable: false),
+        shots: e.shots.where((g) => g.roundNumber == round).toList(growable: false),
+        grenadeEvents: e.grenadeEvents.where((g) => g.roundNumber == round).toList(growable: false),
+      );
+      _fxRound = round;
+    }
+    return _fx;
   }
 
   ViewTransform _initialTransform(MapParams map, Size size, ui.Image radar) {

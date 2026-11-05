@@ -30,6 +30,11 @@ class PlaybackBar extends ConsumerWidget {
     final freezePercent =
         ((round.freezeTimeEndTick - round.startTick) / span).clamp(0.0, 1.0);
 
+    final plants = data.effects.bombEvents
+        .where((b) => b.roundNumber == state.roundNumber && b.type == 'planted')
+        .map((b) => ((b.tick - round.startTick) / span).clamp(0.0, 1.0))
+        .toList(growable: false);
+
     return Container(
       key: playbackBarKey,
       width: width,
@@ -65,6 +70,7 @@ class PlaybackBar extends ConsumerWidget {
                       percent: percent,
                       kills: kills,
                       freezePercent: freezePercent,
+                      plants: plants,
                     ),
                     child: const SizedBox.expand(),
                   ),
@@ -113,11 +119,13 @@ class BarPainter extends CustomPainter {
     required this.percent,
     required this.kills,
     required this.freezePercent,
+    this.plants = const [],
   });
 
   final double percent;
   final List<double> kills;
   final double freezePercent;
+  final List<double> plants;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -146,6 +154,14 @@ class BarPainter extends CustomPainter {
       canvas.drawCircle(Offset(size.width * k, size.height / 2), 3, kill);
     }
 
+    final plant = Paint()..color = const Color(0xFFDA7B11);
+    for (final p in plants) {
+      canvas.drawRect(
+        Rect.fromCenter(center: Offset(size.width * p, size.height / 2), width: 6, height: 6),
+        plant,
+      );
+    }
+
     final freeze = Paint()..color = const Color(0xFF378EF0);
     canvas.drawRect(
       Rect.fromCenter(
@@ -164,7 +180,8 @@ class BarPainter extends CustomPainter {
   bool shouldRepaint(covariant BarPainter old) =>
       old.percent != percent ||
       old.freezePercent != freezePercent ||
-      old.kills.length != kills.length;
+      old.kills.length != kills.length ||
+      old.plants.length != plants.length;
 }
 
 /// Timer pill top-center; always visible even when chrome hides.
