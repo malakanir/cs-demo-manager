@@ -60,8 +60,7 @@ class _MatchesScreenState extends ConsumerState<MatchesScreen> {
       return;
     }
     if (!mounted) return;
-    await SystemChrome.setPreferredOrientations([DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
-    if (!mounted) return;
+    // The viewer owns orientation: landscape on init, portrait on dispose.
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => ProviderScope(
@@ -72,7 +71,6 @@ class _MatchesScreenState extends ConsumerState<MatchesScreen> {
         ),
       ),
     );
-    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   }
 
   @override

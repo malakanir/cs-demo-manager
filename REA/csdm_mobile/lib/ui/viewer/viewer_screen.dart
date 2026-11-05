@@ -14,6 +14,7 @@ import '../../render/players_painter.dart';
 import '../../render/radar_painter.dart';
 import '../../render/view_transform.dart';
 import 'gestures.dart';
+import '../unsupported_map_screen.dart';
 import 'kill_feed.dart';
 import 'teams_panel.dart';
 import 'playback_bar.dart';
@@ -33,7 +34,9 @@ String formatRemaining(int ticks, int tickrate) {
 
 /// Decodes the bundled radar PNG into a [ui.Image], cached by checksum.
 final radarImageProvider = FutureProvider<ui.Image>((ref) async {
-  final data = await rootBundle.load('assets/radars/cs2/de_mirage.png');
+  final mapName = ref.watch(playbackDataProvider).data.mapName;
+  // A missing asset throws here; the viewer turns that into the unsupported-map screen.
+  final data = await rootBundle.load('assets/radars/cs2/$mapName.png');
   final buffer = await ui.ImmutableBuffer.fromUint8List(
     data.buffer.asUint8List(),
   );
@@ -76,6 +79,7 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
   Timer? _hideTimer;
   MapParams? _map;
   bool _disposed = false;
+  bool _mapsLoaded = false;
 
   @override
   void initState() {
@@ -90,11 +94,16 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
     if (_map == null) {
       MapParams.loadFromAsset().then((_) {
         if (mounted) {
-          setState(() => _map = MapParams.forMap(
-                ref.read(playbackDataProvider).data.mapName,
-              ));
+          setState(() {
+            _mapsLoaded = true;
+            _map = MapParams.forMap(
+              ref.read(playbackDataProvider).data.mapName,
+            );
+          });
         }
       });
+    } else {
+      _mapsLoaded = true;
     }
     // The ticker only runs while playing: an always-muted ticker would keep
     // pumping frames and never let pumpAndSettle finish in tests.
@@ -188,13 +197,19 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
 
     final map = _map;
     if (map == null) {
-      return const Scaffold(body: Center(child: Text('Unsupported map')));
+      return _mapsLoaded
+          ? UnsupportedMapScreen(mapName: data.mapName)
+          : const ColoredBox(color: Color(0xFF1B1F23));
     }
     final timeline = state.timeline;
     if (timeline == null) {
       return const Scaffold(body: Center(child: Text('No positions')));
     }
-    final radar = ref.watch(radarImageProvider).value;
+    final radarAsync = ref.watch(radarImageProvider);
+    if (radarAsync.hasError) {
+      return UnsupportedMapScreen(mapName: data.mapName);
+    }
+    final radar = radarAsync.value;
     if (radar == null) {
       return const ColoredBox(color: Color(0xFF1B1F23));
     }

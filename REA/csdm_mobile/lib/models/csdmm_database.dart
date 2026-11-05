@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:sqlite3/sqlite3.dart';
 
+import 'format_exception.dart';
 import 'packed_timeline.dart';
 
 /// Read-only, typed access to a `.csdmm` match file.
@@ -13,9 +14,34 @@ import 'packed_timeline.dart';
 class CsdmmDatabase {
   CsdmmDatabase._(this._database);
 
+  /// Opens [path] read-only and validates it is a supported `.csdmm` file.
+  /// Throws [CsdmmFormatException] for corrupt, truncated or unsupported files.
   static CsdmmDatabase open(String path) {
-    return CsdmmDatabase._(sqlite3.open(path, mode: OpenMode.readOnly));
+    final Database database;
+    try {
+      database = sqlite3.open(path, mode: OpenMode.readOnly);
+    } on SqliteException catch (e) {
+      throw CsdmmFormatException('Cannot open file: ${e.message}');
+    }
+    final result = CsdmmDatabase._(database);
+    try {
+      final version = result.getMeta()['format_version'];
+      if (version != supportedFormatVersion) {
+        throw CsdmmFormatException(
+          'Unsupported file format version ${version ?? '(missing)'}; this app reads version $supportedFormatVersion.',
+        );
+      }
+    } on SqliteException {
+      database.close();
+      throw const CsdmmFormatException('Not a valid match file (corrupt or truncated).');
+    } on CsdmmFormatException {
+      database.close();
+      rethrow;
+    }
+    return result;
   }
+
+  static const supportedFormatVersion = '1';
 
   final Database _database;
 
@@ -298,6 +324,10 @@ class MatchData {
         ),
         mapTransform: database.getMapTransform(),
       );
+    } on SqliteException catch (e) {
+      throw CsdmmFormatException('Match file is corrupt: ${e.message}');
+    } on FormatException catch (e) {
+      throw CsdmmFormatException('Match file has invalid data: ${e.message}');
     } finally {
       database.close();
     }
