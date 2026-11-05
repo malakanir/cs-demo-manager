@@ -107,7 +107,7 @@ void main() {
       expect(states.hasHelmet, orderedEquals([1]));
       expect(states.activeWeaponNames, equals(['weapon_ak47']));
       expect(states.equipments, equals(['weapon_knife']));
-      expect(states.grenades, equals(['']));
+      expect(states.grenades, equals(['weapon_flashbang,weapon_smokegrenade']));
       expect(states.pistols, equals(['weapon_glock']));
       expect(states.smgs, equals(['']));
       expect(states.rifles, equals(['weapon_ak47']));
@@ -118,6 +118,18 @@ void main() {
       expect(bob.states.side, orderedEquals([3]));
       expect(bob.states.money, orderedEquals([800]));
       expect(bob.states.activeWeaponNames, equals(['weapon_m4a1']));
+    });
+
+    test('decodes a multi-weapon category as one value per state', () {
+      final rows = database.getPositions()[1]!;
+      final alice = rows.firstWhere((row) => row.playerSteamId == aliceSteamId);
+      final states = alice.states;
+
+      // One state sample carrying two grenades: the inventory list must stay
+      // parallel to stateCount and keep both weapons in a single element.
+      expect(states.stateCount, 1);
+      expect(states.grenades, hasLength(states.stateCount));
+      expect(states.grenades.first, 'weapon_flashbang,weapon_smokegrenade');
     });
 
     test('getKills returns typed rows', () {

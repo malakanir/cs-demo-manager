@@ -35,8 +35,8 @@ PackedTimeline decodeStates() {
     isGrabbingHostage: uint8Blob([0]),
     activeWeaponNames: const ['weapon_ak47'],
     equipments: const ['weapon_knife'],
-    // The exporter CSV-joins inventory arrays, so "no grenades" is one empty
-    // string per state sample, not a zero-length list.
+    // The exporter newline-joins inventory arrays, so "no grenades" is one
+    // empty string per state sample, not a zero-length list.
     grenades: const [''],
     pistols: const ['weapon_glock'],
     smgs: const [''],

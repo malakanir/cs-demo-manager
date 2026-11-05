@@ -539,8 +539,12 @@ class MapTransformRow {
   final String game;
 }
 
-/// The exporter CSV-joins inventory arrays. An empty array is written as an
-/// empty string, which still represents one value per state sample.
+/// The exporter newline-joins the per-state inventory arrays, so `\n` separates
+/// state samples. A weapon name never contains `\n`, which keeps the state
+/// boundaries unambiguous even when a single state carries several weapons of
+/// the same category (`weapon_flashbang,weapon_smokegrenade`). An empty array
+/// is written as an empty string, which still represents one value per state
+/// sample.
 List<String> _splitWeaponList(String value, int stateCount) {
   if (stateCount == 0) {
     return const [];
@@ -548,7 +552,7 @@ List<String> _splitWeaponList(String value, int stateCount) {
   if (value.isEmpty) {
     return List<String>.filled(stateCount, '');
   }
-  return value.split(',');
+  return value.split('\n');
 }
 
 List<List<double>> _parseConvexHulls(String value) {

@@ -170,8 +170,9 @@ String createFixtureCsdmm(Directory directory) {
       String activeWeapon,
       String pistols,
       int stateSide,
-      int stateMoney,
-    ) {
+      int stateMoney, {
+      String grenades = '',
+    }) {
       database.execute(
         '''INSERT INTO player_positions (
              round_number, player_steam_id,
@@ -206,7 +207,7 @@ String createFixtureCsdmm(Directory directory) {
           isGrabbingHostage,
           activeWeapon,
           'weapon_knife',
-          '',
+          grenades,
           pistols,
           '',
           activeWeapon,
@@ -215,7 +216,16 @@ String createFixtureCsdmm(Directory directory) {
       );
     }
 
-    insertPositions(aliceSteamId, 'weapon_ak47', 'weapon_glock', 2, 4000);
+    insertPositions(
+      aliceSteamId,
+      'weapon_ak47',
+      'weapon_glock',
+      2,
+      4000,
+      // A single state can carry several grenades; the exporter newline-joins
+      // per-state values, so the state's own category stays comma-joined.
+      grenades: 'weapon_flashbang,weapon_smokegrenade',
+    );
     insertPositions(bobSteamId, 'weapon_m4a1', 'weapon_usp_silencer', 3, 800);
 
     database.execute(
