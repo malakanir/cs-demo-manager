@@ -3,9 +3,11 @@ import type { DB } from '../db/types.js';
 import type { PlayerPositionRow } from './rows.js';
 
 // csdm stores the 7 per-state inventory columns as PostgreSQL text[] arrays;
-// the .csdmm schema keeps them as parallel-per-state-index TEXT joined with ','.
+// the .csdmm schema keeps them as parallel-per-state-index TEXT joined with
+// '\n'. A newline can never appear inside a weapon name (each PG array element
+// is already a comma-joined category), so per-state boundaries stay unambiguous.
 function joinArray(values: string[]): string {
-  return values.join(',');
+  return values.join('\n');
 }
 
 /**

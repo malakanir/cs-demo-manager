@@ -68,7 +68,7 @@ describe('csdmm writer', () => {
         round_number: 1,
         player_steam_id: '76561190000000001',
         ...blobs,
-        active_weapon_name: 'weapon_ak47,weapon_ak47',
+        active_weapon_name: 'weapon_ak47\nweapon_ak47',
         equipments: 'weapon_knife',
         grenades: '',
         pistols: 'weapon_glock',
