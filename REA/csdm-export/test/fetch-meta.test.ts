@@ -54,7 +54,7 @@ describe('fetchRounds', () => {
     // Half-time switch: round 2 team_a_side=2 (T), so ct/t scores swap sides
     // (score_ct comes from team_b_score here).
     expect(second.score_ct).toBe(1);
-    expect(second.score_t).toBe(1);
+    expect(second.score_t).toBe(2);
   });
 
   it('returns an empty list for an unknown checksum', async () => {

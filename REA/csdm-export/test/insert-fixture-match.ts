@@ -109,8 +109,10 @@ export async function insertFixtureMatch(db: Kysely<DB>): Promise<string> {
         winner_side: 2,
         end_reason: 0,
         // Half-time side switch: team A started CT (round 1) and is T now.
+        // Asymmetric scores (2/1) pin the side-derived ct/t mapping: the old
+        // unconditional team_a→ct mapping would yield score_ct=2/score_t=1.
         team_a_side: 2,
-        team_a_score: 1,
+        team_a_score: 2,
         team_b_score: 1,
       },
     ])
