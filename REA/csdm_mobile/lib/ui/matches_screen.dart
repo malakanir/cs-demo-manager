@@ -52,7 +52,7 @@ class _MatchesScreenState extends ConsumerState<MatchesScreen> {
     final lib = await ref.read(libraryProvider.future);
     final MatchData data;
     try {
-      data = MatchData.load(lib.pathFor(checksum));
+      data = await MatchData.loadAsync(lib.pathFor(checksum));
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Cannot open match: $e')));

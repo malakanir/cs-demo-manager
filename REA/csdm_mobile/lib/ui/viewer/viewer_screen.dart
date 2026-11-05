@@ -150,10 +150,18 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
     final vt = _transform;
     final timeline = state.timeline;
     if (vt != null && timeline != null) {
-      final hit = hitTestPlayer(timeline: timeline, tick: state.tick, vt: vt, screen: position);
+      final hit = hitTestPlayer(
+        timeline: timeline,
+        tick: state.tick,
+        vt: vt,
+        screen: position,
+      );
       if (hit != null) {
         // Tap a player to focus it (thicker ring + name); tap again to clear.
-        setState(() => _focused.contains(hit) ? _focused.remove(hit) : _focused.add(hit));
+        setState(
+          () =>
+              _focused.contains(hit) ? _focused.remove(hit) : _focused.add(hit),
+        );
         return;
       }
     }
@@ -218,8 +226,7 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
     // current tick (they stay visible for the rest of the round).
     final kills = data.kills
         .where(
-          (k) =>
-              k.roundNumber == state.roundNumber && k.tick <= state.tick,
+          (k) => k.roundNumber == state.roundNumber && k.tick <= state.tick,
         )
         .toList(growable: false);
 
@@ -230,8 +237,11 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
       backgroundColor: const Color(0xFF1B1F23),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final vt =
-              _transform ??= _initialTransform(map, constraints.biggest, radar);
+          final vt = _transform ??= _initialTransform(
+            map,
+            constraints.biggest,
+            radar,
+          );
           return Stack(
             children: [
               Positioned.fill(
@@ -245,29 +255,32 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
                       CanvasGestures().apply(vt, details);
                     });
                   },
-                  child: CustomPaint(
-                    painter: RadarPainter(radar: radar, vt: vt),
-                    foregroundPainter: PlayersPainter(
-                      timeline: timeline,
-                      tick: state.tick,
-                      vt: vt,
-                      zoom: vt.zoom,
-                      kills: kills,
-                      focusedIds: _focused,
-                      playerNames: playerNames,
-                    ),
+                  // Isolate canvas repaints from the chrome widgets above it.
+                  child: RepaintBoundary(
                     child: CustomPaint(
-                      painter: EffectsPainter(
-                        grenades: fx.grenades,
-                        infernos: fx.infernos,
-                        shots: fx.shots,
-                        grenadeEvents: fx.grenadeEvents,
+                      painter: RadarPainter(radar: radar, vt: vt),
+                      foregroundPainter: PlayersPainter(
+                        timeline: timeline,
                         tick: state.tick,
-                        tickrate: state.tickrate,
                         vt: vt,
                         zoom: vt.zoom,
+                        kills: kills,
+                        focusedIds: _focused,
+                        playerNames: playerNames,
                       ),
-                      child: const SizedBox.expand(),
+                      child: CustomPaint(
+                        painter: EffectsPainter(
+                          grenades: fx.grenades,
+                          infernos: fx.infernos,
+                          shots: fx.shots,
+                          grenadeEvents: fx.grenadeEvents,
+                          tick: state.tick,
+                          tickrate: state.tickrate,
+                          vt: vt,
+                          zoom: vt.zoom,
+                        ),
+                        child: const SizedBox.expand(),
+                      ),
                     ),
                   ),
                 ),
@@ -280,7 +293,9 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
                 child: IgnorePointer(
                   child: KillFeed(
                     kills: visibleKills(
-                      data.kills.where((k) => k.roundNumber == state.roundNumber).toList(growable: false),
+                      data.kills
+                          .where((k) => k.roundNumber == state.roundNumber)
+                          .toList(growable: false),
                       state.tick,
                       state.tickrate,
                     ),
@@ -297,7 +312,7 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
                   child: TimerPill(
                     remainingTicks:
                         state.roundFor(data.rounds)!.endOfficiallyTick -
-                            state.tick,
+                        state.tick,
                     tickrate: state.tickrate,
                   ),
                 ),
@@ -351,10 +366,18 @@ class _ViewerScreenState extends ConsumerState<ViewerScreen>
     if (_fxRound != round) {
       final e = data.effects;
       _fx = _RoundEffects(
-        grenades: e.grenades.where((g) => g.roundNumber == round).toList(growable: false),
-        infernos: e.infernos.where((g) => g.roundNumber == round).toList(growable: false),
-        shots: e.shots.where((g) => g.roundNumber == round).toList(growable: false),
-        grenadeEvents: e.grenadeEvents.where((g) => g.roundNumber == round).toList(growable: false),
+        grenades: e.grenades
+            .where((g) => g.roundNumber == round)
+            .toList(growable: false),
+        infernos: e.infernos
+            .where((g) => g.roundNumber == round)
+            .toList(growable: false),
+        shots: e.shots
+            .where((g) => g.roundNumber == round)
+            .toList(growable: false),
+        grenadeEvents: e.grenadeEvents
+            .where((g) => g.roundNumber == round)
+            .toList(growable: false),
       );
       _fxRound = round;
     }

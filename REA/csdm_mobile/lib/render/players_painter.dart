@@ -134,18 +134,20 @@ class PlayersPainter extends CustomPainter {
     if (name == null) {
       return;
     }
-    final tp = _namePainter(steamId, name);
+    final tp = namePainterFor(steamId, name);
     tp.paint(
       canvas,
       center + Offset(playerRadius + 4, -playerRadius - 4),
     );
   }
 
-  /// One [TextPainter] per steam ID, reused across frames.
+  /// One laid-out [TextPainter] per (steam ID, name), reused across frames so
+  /// text layout never happens inside the 16 ms paint budget after the first use.
   static final Map<String, TextPainter> _namePainters = {};
 
-  static TextPainter _namePainter(String steamId, String name) {
-    return _namePainters.putIfAbsent(steamId, () {
+  @visibleForTesting
+  static TextPainter namePainterFor(String steamId, String name) {
+    return _namePainters.putIfAbsent('$steamId\u0000$name', () {
       final tp = TextPainter(
         text: TextSpan(
           text: name,

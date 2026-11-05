@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:sqlite3/sqlite3.dart';
@@ -305,6 +306,10 @@ class MatchData {
     required this.effects,
     required this.mapTransform,
   });
+
+  /// Same as [load] but decodes on a background isolate so a large file never
+  /// blocks the UI thread. Errors (e.g. [CsdmmFormatException]) are rethrown.
+  static Future<MatchData> loadAsync(String path) => Isolate.run(() => load(path));
 
   static MatchData load(String path) {
     final database = CsdmmDatabase.open(path);
